@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="./assets/img/logo.png">
+    <!-- Google icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined">
+    <title>Music Player</title>
+</head>
+<body>
+    <div class="player">
+        <!-- dashboard -->
+        <div class="dashboard">
+            <!-- header -->
+            <div class="header">
+                <h4>Now playing</h4>
+                <i class="material-icons">arrow_drop_down</i>
+                <h2>Name of the song</h2>
+            </div>
+
+            <!-- CD -->
+            <div class="cd">
+                <div class="cd-thumb" style="background-image: url('/assets/img/pic1.jpg');">
+                </div>
+            </div>
+
+            <!-- control -->
+            <div class="control">
+                <div class="btn btn-repeat">
+                    <i class="material-icons">replay</i>
+                </div>
+                <div class="btn btn-prev">
+                    <i class="material-icons">skip_previous</i>
+                </div>
+                <div class="btn btn-toggle-play">
+                    <i class="material-icons icon-play">play_circle_filled</i>
+                    <i class="material-icons icon-pause">pause</i>
+                </div>
+                <div class="btn btn-next">
+                    <i class="material-icons">skip_next</i>
+                </div>
+                <div class="btn btn-shuffle">
+                    <i class="material-icons">shuffle</i>
+                </div>
+            </div>
+
+            <div class="progress">
+                <div class="volume">
+                    <input type="range" class="volume-input" value="75" min="0" max="100" step="1">
+                    <div class="volume-icons">
+                        <i class="material-icons on">volume_up</i>
+                        <i class="material-icons off">volume_off</i>
+                    </div>
+                    <span class="volume-value">75</span>
+                </div>
+                <div class="value progressValue">00:00</div>
+                <input id="progress" type="range" value="0" step="1" min="0" max="100">
+                <div class="progressBackground"></div>
+                <div class="value durationValue">00:00</div>
+            </div>
+
+            <audio id= "audio" src=""></audio>
+        </div>
+
+        <!-- playlist -->
+        <div class="playlist"></div>
+    </div>
+    
+    <script>
+
+        /**
+         * 1. render songs - done
+         * 2. scroll top 
+         * 3. play/ pause/ seek
+         * 4. CD rotate
+         * 5. next/ prev
+         * 6. random
+         * 7. next/ repeat when ended
+         * 8. active song
+         * 9. scroll active song into view
+         * 10. play song when click
+         */
+
+        const $ = document.querySelector.bind(document);
+        const $$ = document.querySelectorAll.bind(document);
+
+        const PLAYER_STORAGE_KEY = 'MUSIC_PLAYER';
+
+        const player = $('.player');
+        const cd = $('.cd');
+        const heading = $('.header h2');
+        const cdThumb = $('.cd-thumb');
+        const audio = $('#audio');
+        const progressBackground = $('.progressBackground');
+        const progressValue = $('.progressValue');
+        const durationValue = $('.durationValue');
+        const repeatBtn = $('.btn-repeat');
+        const playAudio = $('.btn-toggle-play');
+        const progress = $('#progress');
+        const prevBtn = $('.btn-prev');
+        const nextBtn = $('.btn-next');
+        const shuffleBtn = $('.btn-shuffle');
+        const volume = $('.volume');
+        const volumeInput = $('.volume-input'); 
+        const volumeBtn = $('.volume-icons');
+        const volumeValue = $('.volume-value'); 
+        const playlist = $('.playlist');
+
+        const app = {
+            currentIndex: 0,
+
+            listPlayedSongs: [],
+
+            isPlaying: false,
+
+            isRepeated: false,
+
+            isShuffled: false,
+
+            isVolumeAdjusted: false,
+
+            isUnmuted: false,
+
+            config: JSON.parse(localStorage.getItem(PLAYER_STORAGE_KEY)) || {},
+
+            songs: [
+                {
+                    name: 'Dancing With Your Ghost',
+                    singer: 'Sasha Alex Sloan',
+                    path: './assets/music/song1.mp3',
+                    image: './assets/img/pic1.jpg'
+                },
+                {
+                    name: 'Don\'t You Hold Me Down',
+                    singer: 'Alan Walker, Georgia Ku',
+                    path: './assets/music/song2.mp3',
+                    image: './assets/img/pic2.jpg'
+                },
+                {
+                    name: 'Easy On Me',
+                    singer: 'Adele',
+                    path: './assets/music/song3.mp3',
+                    image: './assets/img/pic3.jpg'
+                },
+                {
+                    name: 'Havana',
+                    singer: 'Camila Cabello, Young Thug',
+                    path: './assets/music/song4.mp3',
+                    image: './assets/img/pic4.jpg'
+                },
+                {
+                    name: 'INDUSTRY BABY',
+                    singer: 'Lil Nas X, Jack Harlow',
+                    path: './assets/music/song5.mp3',
+                    image: './assets/img/pic5.jpg'
+                },
+                {
+                    name: 'Kiss Me More',
+                    singer: 'Doja Cat, SZA',
+                    path: './assets/music/song6.mp3',
+                    image: './assets/img/pic6.jpg'
+                },
+                {
+                    name: 'Paradise',
+                    singer: 'Alan Walker, K-391, Boy In Space',
+                    path: './assets/music/song7.mp3',
+                    image: './assets/img/pic7.jpg'
+                },
+                {
+                    name: 'Running Out of Roses',
+                    singer: 'Alan Walker, Jamie Miller',
+                    path: './assets/music/song8.mp3',
+                    image: './assets/img/pic8.jpg'
+                },
+                {
+                    name: 'Señorita',
+                    singer: 'Shawn Mendes, Camila Cabello',
+                    path: './assets/music/song9.mp3',
+                    image: './assets/img/pic9.jpg'
+                },
+                {
+                    name: 'STAY',
+                    singer: 'The Kid LAROI, Justin Bieber',
+                    path: './assets/music/song10.mp3',
+                    image: './assets/img/pic10.jpg'
+                },
+            ],
+
+            setConfig: function(key, value) {
+                this.config[key] = value;
+                localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(this.config));
+            },
+
+            render: function(){
+                const htmls = this.songs.map((song, index) => {
+                    return `
+                        <div class="song ${index === this.currentIndex ? 'active' : ''}" data-index="${index}">
+                            <div class="thumb"style="background-image: url(${song.image})"></div>
+                            <div class="body">
+                                <h3 class="title">${song.name}</h3>
+                                <p class="author">${song.singer}</p>
+                            </div>
+                            <div class="option">
+                                <i class="material-icons">more_horiz</i>
+                            </div>
+                        </div>
+                    `
+                })
+                playlist.innerHTML = htmls.join('');
+            },
+
+            defineProperties: function() {
+                Object.defineProperty(this, 'currentSong', {
+                    get: function() {
+                        return this.songs[this.currentIndex]
+                    }
+                })
+            },
+
+            handleEvents: function(){
+                const _this = this;
+                const cdWidth = cd.offsetWidth;
+                
+                // zoom in/ zoom out the CD
+                document.onscroll = function() {
+                    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+                    const newCdWidth = cdWidth - scrollTop;
+
+                    cd.style.width = newCdWidth > 0 ? newCdWidth + 'px' : 0;
+                    cd.style.opacity = newCdWidth/cdWidth;
+                }
+
+                // rotate CD thumb
+                const cdAnimate = cd.animate([
+                    {transform: 'rotate(360deg)'}
+                ],{
+                    duration: 10000,
+                    iterations: Infinity
+                });
+                cdAnimate.pause();
+
+                // play audio on click/ space key press
+                playAudio.onclick = function() {
+                    if(_this.isPlaying) {
+                        audio.pause();
+                    } else {
+                        audio.play();
+                    }
+                }
+
+                document.onkeypress = function(e) {
+                    if(e.which === 32) {
+                        playAudio.onclick();
+                    }
+                }
+                
+                // check if audio is playing or not
+                audio.onplay = function() {
+                    _this.isPlaying = true;
+                    player.classList.add('playing');
+                    cdAnimate.play();
+                    _this.setConfig('currentIndex', _this.currentIndex);
+                }
+                audio.onpause = function() {
+                    _this.isPlaying = false;
+                    player.classList.remove('playing');
+                    cdAnimate.pause();
+                }
+
+                // changes on audio progress & volume
+                audio.ontimeupdate = function() {
+                    // audio progress
+                    if(audio.duration) {
+                        const progressPercent = Math.floor(audio.currentTime/ audio.duration * 100);
+                        progress.value = progressPercent;
+
+                        // load current time
+                        progressValue.textContent = `${('0' + Math.floor(audio.currentTime/60)).slice(-2)}:${('0' + Math.round(audio.currentTime%60)).slice(-2)}`;
+
+                        // load duration
+                        durationValue.textContent = `${('0' + Math.floor(audio.duration/60)).slice(-2)}:${('0' + Math.round(audio.duration%60)).slice(-2)}`;
+
+                        // progress background
+                        progressBackground.style.width = (progressPercent) + '%';
+                    }
+
+                    // audio volume
+                    _this.setConfig('currentVolume', audio.volume*100);
+                    _this.currentVolume = Math.round(audio.volume*100);
+                    volumeInput.value = _this.currentVolume
+
+                    if(audio.volume === 0) {
+                        volumeValue.textContent = 'Muted';
+                    } else {
+                        volumeValue.textContent = _this.currentVolume;
+                    }
+                    
+                    if(audio.volume === 0) {
+                        _this.isUnmuted = true;
+                        volumeBtn.classList.add('unmute');
+                        volumeValue.textContent = 'Muted';
+                    } else {
+                        _this.isUnmuted = false;
+                        volumeBtn.classList.remove('unmute');
+                    }
+                }
+
+                // actions when seeking a song
+                progress.oninput = function(e) {
+                    audio.currentTime = e.target.value * audio.duration / 100;
+                }
+
+                // actions wwhen adjust volume
+                volumeBtn.onclick = function() {
+                    _this.isVolumeAdjusted = !_this.isVolumeAdjusted;
+                    volume.classList.toggle('active', _this.isVolumeAdjusted);
+                }
+
+                volumeInput.onblur = function() {
+                    _this.isVolumeAdjusted = !_this.isVolumeAdjusted;
+                    volume.classList.toggle('active', _this.isVolumeAdjusted);
+                }
+
+                volumeInput.oninput = function(e) {
+                    audio.volume = (volumeInput.value)/100;
+                    volumeValue.textContent = Math.round(audio.volume*100);
+                    
+                    if(audio.volume === 0) {
+                        _this.isUnmuted = true;
+                        volumeBtn.classList.add('unmute');
+                        volumeValue.textContent = 'Muted';
+                    } else {
+                        _this.isUnmuted = false;
+                        volumeBtn.classList.remove('unmute');
+                    }
+                }
+
+                // next/ prev song
+                prevBtn.onclick = function() {
+                    if(_this.isShuffled){
+                        _this.shuffleSong();
+                        if(_this.listPlayedSongs.length < _this.songs.length -1){
+                            _this.listPlayedSongs.push(_this.currentIndex);
+                        } else {
+                            _this.listPlayedSongs.splice(0, _this.songs.length);
+                        }
+                        console.log(_this.listPlayedSongs);
+                    } else {
+                        _this.prevSong();
+                    }
+                    audio.play();
+                    _this.render();
+                    _this.scrollToActiveSong();
+                }
+
+                nextBtn.onclick = function() {
+                    if(_this.isShuffled){
+                        _this.shuffleSong();
+                        if(_this.listPlayedSongs.length < _this.songs.length -1){
+                            _this.listPlayedSongs.push(_this.currentIndex);
+                        } else {
+                            _this.listPlayedSongs.splice(0, _this.songs.length);
+                        }
+                        console.log(_this.listPlayedSongs);
+                    } else {
+                        _this.nextSong();
+                    }
+                    audio.play();
+                    _this.render();
+                    _this.scrollToActiveSong();
+                }
+
+                // random/ shuffle songs
+                shuffleBtn.onclick = function() {
+                    _this.isShuffled = !_this.isShuffled;
+                    _this.setConfig('isShuffled',_this.isShuffled);
+                    shuffleBtn.classList.toggle('active', _this.isShuffled);
+                }
+
+                // repeat a song
+                repeatBtn.onclick = function() {
+                    _this.isRepeated = !_this.isRepeated;
+                    _this.setConfig('isRepeated',_this.isRepeated);
+                    repeatBtn.classList.toggle('active', _this.isRepeated);
+                }
+
+                // play next song when ended
+                audio.onended = function() {
+                    if(_this.isRepeated) {
+                        audio.play();
+                    } else {
+                        nextBtn.click();
+                    }
+                }
+
+                // play a song when clicked
+                playlist.onclick = function(e) {
+                    const songNode = e.target.closest('.song:not(.active)');
+                    if(songNode || e.target.closest('.option')) {
+                        if(e.target.closest('.option')) {
+                            console.log('option')
+                        }if(songNode) {
+                            _this.currentIndex = Number(songNode.dataset.index)
+                            _this.loadCurrentSong();
+                            _this.render();
+                            audio.play();
+                        }
+                    }
+                }
+
+            },
+
+            scrollToActiveSong: function() {
+                const _this = this;
+                setTimeout(function() {
+                    if(_this.currentIndex < 5) {
+                        $('.song.active').scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        })
+                    } else {
+                        $('.song.active').scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'nearest'
+                        })
+                    }
+                }, 300)
+            },
+
+            loadCurrentSong: function(){
+                heading.textContent = this.currentSong.name;
+                cdThumb.style.backgroundImage = `url('${this.currentSong.image}')`;
+                audio.src = this.currentSong.path;
+            },
+
+            prevSong: function() {
+                this.currentIndex--;
+                if (this.currentIndex < 0) {
+                    this.currentIndex = 0;
+                }
+                this.loadCurrentSong();
+            },
+
+            nextSong: function() {
+                this.currentIndex++;
+                if (this.currentIndex >= this.songs.length) {
+                    this.currentIndex = 0;
+                }
+                this.loadCurrentSong();
+            },
+
+            shuffleSong: function() {
+                do{
+                    var shuffleIndex = Math.floor(Math.random()*this.songs.length);
+                } while ((shuffleIndex === this.currentIndex)&&(this.listPlayedSongs.includes(shuffleIndex)));
+                this.currentIndex = shuffleIndex;
+                this.loadCurrentSong();
+            },
+
+            loadConfig: function() {
+                this.isShuffled = this.config.isShuffled;
+                this.isRepeated = this.config.isRepeated;
+                this.currentIndex = this.config.currentIndex;
+                this.currentVolume = this.config.currentVolume;
+            },
+
+            start: function(){
+                // load config setting
+                this.loadConfig();
+
+                // load CSS for functions from config setting
+                shuffleBtn.classList.toggle('active', this.isShuffled);
+                repeatBtn.classList.toggle('active', this.isRepeated);
+                volumeBtn.classList.toggle('unmuted', this.isUnmuted);
+
+                // define properties for objects
+                this.defineProperties();
+
+                // listen/ resolve events (DOM events)
+                this.handleEvents();
+
+                // load current song's information 
+                this.loadCurrentSong();
+
+                // render playlist
+                this.render();
+
+                audio.volume = (this.currentVolume)/100;
+            }
+        };
+
+        app.start();
+
+    </script>
+</body>
+</html>
