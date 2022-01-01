@@ -75,7 +75,33 @@
       
     </div>
 
-    <script src="./javascript.js"></script>
+    <script src="./validator.js"></script>
+    <script>
+
+      Validator({
+        form: '#form-1',
+        formGroupSelector: '.form-group',
+        errorSelector: '.form-message',
+        rules: [
+          Validator.isRequired('#fullname', 'Vui lòng nhập tên đầy đủ của bạn'),
+          Validator.isRequired('#email', 'Vui lòng nhập email của bạn'),
+          Validator.isRequired('#password', 'Vui lòng nhập mật khẩu của bạn'),
+          Validator.isRequired('#password_confirmation', 'Vui lòng nhập lại mật khẩu'),
+          Validator.isRequired('input[name=gender]', 'Vui lòng chọn giới tính của bạn'),
+          Validator.isRequired('#province', 'Vui lòng chọn tỉnh/thành phố'),
+          Validator.isRequired('input[name=course]', 'Vui lòng chọn khóa học'),
+          Validator.isEmail('#email'),
+          Validator.minLength('#password', 'Mật khẩu', 2),
+          Validator.isConfirmed('#password_confirmation', 'Mật khẩu', function () { 
+            return document.querySelector('#form-1 #password').value;
+          })
+        ],
+        onSubmit: function (data) {
+          console.log(data);
+        }
+      })
+
+    </script>
 
 </body>
 </html>
